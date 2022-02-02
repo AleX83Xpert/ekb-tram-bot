@@ -1,0 +1,24 @@
+{
+  "name": "ekb-tram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for getting info about trams in Ekaterinburg",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AleX83Xpert/ekb-tram-bot.git"
+  },
+  "keywords": [
+    "telegram",
+    "tram",
+    "ekaterinburg"
+  ],
+  "author": "AleX83Xpert",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AleX83Xpert/ekb-tram-bot/issues"
+  },
+  "homepage": "https://github.com/AleX83Xpert/ekb-tram-bot#readme"
+}
