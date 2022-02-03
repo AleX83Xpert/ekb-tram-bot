@@ -1,6 +1,12 @@
 This bot shows trams locations in Ekaterinburg city using oficial data got from http://ettu.ru
 
-see boot in action: [@EkbTramBot](https://t.me/EkbTramBot)
+## Demo
+See boot in action: [@EkbTramBot](https://t.me/EkbTramBot)
+
+Examples:
+![image](https://user-images.githubusercontent.com/25384290/152299521-b0a5f4ae-4726-47cb-b1a1-5f09526f0856.png)
+![image](https://user-images.githubusercontent.com/25384290/152299659-2b943154-085e-40f8-a1bc-f5534b1ca7a7.png)
+
 
 ## Settings .env
 You must set tokens&keys using `.env` file:
