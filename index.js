@@ -3,6 +3,7 @@ const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const axios = require('axios');
 const geoUtils = require('geolocation-utils')
+const logger = require('./logger')
 
 const allowedTramRoutes = ['32', '15', '26']
 const ettuApiKey = process.env.ETTU_API_KEY
@@ -11,19 +12,19 @@ let routes = null
 let points = null
 
 bot.command('start', ctx => {
-    console.log(ctx.from)
+    logger.info(`start: `, ctx.from)
     bot.telegram.sendMessage(ctx.chat.id, `This bot shows following tram routes in Ekaterinburg: ${allowedTramRoutes.join(', ')}`, {
     })
 })
 
 bot.command('help', ctx => {
-    console.log(ctx.from)
-    bot.telegram.sendMessage(ctx.chat.id, `To watch trams send the number of the tram from the following list: ${allowedTramRoutes.join(', ')}`, {
-    })
+    logger.info(`help: `, ctx.from)
+    bot.telegram.sendMessage(ctx.chat.id, `To watch trams send the number of the tram from the following list: ${allowedTramRoutes.join(', ')}`, {})
 })
 
 bot.on('text', (ctx) => {
     const askedRoute = ctx.message.text
+    logger.info(`incoming message`, ctx.message)
     if(allowedTramRoutes.includes(askedRoute)) {
       axios.get(`http://map.ettu.ru/api/v2/tram/boards/?apiKey=${ettuApiKey}&order=1`)
         .then(function (response) {
@@ -86,11 +87,11 @@ bot.on('text', (ctx) => {
                 params: params,
             })
 
+            logger.info(`Send image ${imageUrl} to`, ctx.chat)
             ctx.telegram.sendPhoto(ctx.chat.id, imageUrl)
         })
         .catch(function (error) {
-            // handle error
-            console.log(error);
+            logger.error(error)
         })
         .then(function () {
             // always executed
@@ -98,6 +99,7 @@ bot.on('text', (ctx) => {
     }
 })
 
+logger.info('getting initial data from api server...')
 Promise.all([
     axios.get(`http://map.ettu.ru/api/v2/tram/routes/?apiKey=${ettuApiKey}`),
     axios.get(`http://map.ettu.ru/api/v2/tram/points/?apiKey=${ettuApiKey}`)
@@ -111,6 +113,7 @@ Promise.all([
     })
     routes = results[0].data.routes
     points = results[1].data.points
+    logger.info('initial data received')
 
     // Start webhook via launch method (preferred)
     bot.launch({
@@ -119,10 +122,11 @@ Promise.all([
         //   port: process.env.PORT
         // }
     })
+    logger.info('bot ready to communicate!')
 })
 .catch(function (error) {
     // handle error
-    console.log(error);
+    logger.error(error);
 })
 .then(function () {
     // always executed
