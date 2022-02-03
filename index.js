@@ -8,7 +8,66 @@ const logger = require('./logger')
 const allowedTramRoutes = []
 const ettuApiKey = process.env.ETTU_API_KEY
 
+/**
+ * @typedef EttuRouteElement
+ * @type {object}
+ * @property {string} duration_plan
+ * @property {{id: string, name: string}} from
+ * @property {string[]} full_path
+ * @property {string} id
+ * @property {string} ind
+ * @property {string} kind
+ * @property {string} len
+ * @property {string} len_plan
+ * @property {string} mnemo
+ * @property {string} name
+ * @property {string[]} path
+ * @property {{id: string, name: string}} to
+ */
+
+/**
+ * @typedef EttuRoute
+ * @type {object}
+ * @property {EttuRouteElement[]} elements
+ * @property {{id: string, mnemo: string, name: string}[]} end_stations
+ * @property {string} id
+ * @property {string} name
+ * @property {string} num
+ */
+
+/**
+ * @type {EttuRoute[]}
+ */
 let routes = null
+
+/**
+ * @typedef EttuPoint
+ * @type {object}
+ * @property {string}
+ * @property {string} ID
+ * @property {string} NAME
+ * @property {string} NOTE
+ * @property {string} STATUS
+ * @property {string} X
+ * @property {string} Y
+ * @property {string?} ATTACHED_TO
+ * @property {string} SMS_CODE
+ * @property {string} ANGLE
+ * @property {string} ALIGN
+ * @property {string} TTU_CODE
+ * @property {string} DIRECTION
+ * @property {string} TR_LAYER
+ * @property {string} TTU_IDS
+ * @property {string} LONGITUDE
+ * @property {string} LATITUDE
+ * @property {string} LAT
+ * @property {string} LON
+ * @property {string} ACCURACY
+ */
+
+/**
+ * @type {EttuPoint[]}
+ */
 let points = null
 
 bot.command('start', ctx => {
@@ -27,24 +86,26 @@ bot.on('text', (ctx) => {
   if (allowedTramRoutes.includes(askedRouteStr)) {
     axios.get(`http://map.ettu.ru/api/v2/tram/boards/?apiKey=${ettuApiKey}&order=1`)
       .then(function (response) {
+        /**
+         * @typedef EttuVehicle
+         * @type {object}
+         * @property {string} ATIME
+         * @property {string} DEV_ID
+         * @property {string} LAT
+         * @property {string} LON
+         * @property {string} ROUTE
+         * @property {string} COURSE
+         * @property {string} VELOCITY
+         * @property {string} ON_ROUTE
+         * @property {string} LAYER
+         * @property {string} BOARD_ID
+         * @property {string} BOARD_NUM
+         * @property {string} DEPOT
+         */
+
+        /** @type {EttuVehicle[]} */
         const askedVehicles = response.data.vehicles.filter((tram) => (tram.ROUTE === askedRouteStr))
         const askedRoutes = routes.filter((x) => x.num === askedRouteStr)
-        // [
-        //     {
-        //     ATIME: '2022-02-02 20:19:21',
-        //     DEV_ID: '3008736',
-        //     LAT: '56.834849',
-        //     LON: '60.690990',
-        //     ROUTE: '32',
-        //     COURSE: '270',
-        //     VELOCITY: '0',
-        //     ON_ROUTE: '1',
-        //     LAYER: '1',
-        //     BOARD_ID: '807',
-        //     BOARD_NUM: '807',
-        //     DEPOT: '3'
-        //   }
-        // ]
 
         const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
 
