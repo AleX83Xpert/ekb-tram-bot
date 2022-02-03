@@ -31,3 +31,9 @@ I don't know, just copy this value from http://map.ettu.ru
 npm i
 npm start
 ```
+
+or
+
+```
+docker-compose up -d
+```
