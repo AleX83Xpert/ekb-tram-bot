@@ -25,3 +25,9 @@ Please get the key here: https://developer.mapquest.com/user/me/apps
 
 #### ETTU_API_KEY
 I don't know, just copy this value from http://map.ettu.ru
+
+## Starting
+```
+npm i
+npm start
+```
