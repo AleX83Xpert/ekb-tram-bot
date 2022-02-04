@@ -34,6 +34,10 @@ class TelegramService {
      * @private
      */
     this.allowedTramRoutes = ettuService.getRoutesNums()
+
+    // Enable graceful stop
+    process.once('SIGINT', () => this.bot.stop('SIGINT'))
+    process.once('SIGTERM', () => this.bot.stop('SIGTERM'))
   }
 
   /**
