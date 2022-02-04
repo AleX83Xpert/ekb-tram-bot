@@ -4,66 +4,18 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const axios = require('axios');
 const geoUtils = require('geolocation-utils')
 const logger = require('./logger')
+const { EttuService, MapService, TelegramService } = require('./services')
 
 const allowedTramRoutes = []
 const ettuApiKey = process.env.ETTU_API_KEY
 
-/**
- * @typedef EttuRouteElement
- * @type {object}
- * @property {string} duration_plan
- * @property {{id: string, name: string}} from
- * @property {string[]} full_path
- * @property {string} id
- * @property {string} ind
- * @property {string} kind
- * @property {string} len
- * @property {string} len_plan
- * @property {string} mnemo
- * @property {string} name
- * @property {string[]} path
- * @property {{id: string, name: string}} to
- */
-
-/**
- * @typedef EttuRoute
- * @type {object}
- * @property {EttuRouteElement[]} elements
- * @property {{id: string, mnemo: string, name: string}[]} end_stations
- * @property {string} id
- * @property {string} name
- * @property {string} num
- */
+const ettuService = new EttuService(process.env.ETTU_API_KEY)
+const mapService = new MapService(process.env.MAPQUEST_KEY)
 
 /**
  * @type {EttuRoute[]}
  */
 let routes = null
-
-/**
- * @typedef EttuPoint
- * @type {object}
- * @property {string}
- * @property {string} ID
- * @property {string} NAME
- * @property {string} NOTE
- * @property {string} STATUS
- * @property {string} X
- * @property {string} Y
- * @property {string?} ATTACHED_TO
- * @property {string} SMS_CODE
- * @property {string} ANGLE
- * @property {string} ALIGN
- * @property {string} TTU_CODE
- * @property {string} DIRECTION
- * @property {string} TR_LAYER
- * @property {string} TTU_IDS
- * @property {string} LONGITUDE
- * @property {string} LATITUDE
- * @property {string} LAT
- * @property {string} LON
- * @property {string} ACCURACY
- */
 
 /**
  * @type {EttuPoint[]}
@@ -84,27 +36,9 @@ bot.on('text', (ctx) => {
   const askedRouteStr = ctx.message.text
   logger.info(`incoming message`, ctx.message)
   if (allowedTramRoutes.includes(askedRouteStr)) {
-    axios.get(`http://map.ettu.ru/api/v2/tram/boards/?apiKey=${ettuApiKey}&order=1`)
+    ettuService.getTramBoards()
       .then(function (response) {
-        /**
-         * @typedef EttuVehicle
-         * @type {object}
-         * @property {string} ATIME
-         * @property {string} DEV_ID
-         * @property {string} LAT
-         * @property {string} LON
-         * @property {string} ROUTE
-         * @property {string} COURSE
-         * @property {string} VELOCITY
-         * @property {string} ON_ROUTE
-         * @property {string} LAYER
-         * @property {string} BOARD_ID
-         * @property {string} BOARD_NUM
-         * @property {string} DEPOT
-         */
-
-        /** @type {EttuVehicle[]} */
-        const askedVehicles = response.data.vehicles.filter((tram) => (tram.ROUTE === askedRouteStr))
+        const askedVehicles = response.filter((tram) => (tram.ROUTE === askedRouteStr))
         const askedRoutes = routes.filter((x) => x.num === askedRouteStr)
 
         const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
@@ -170,41 +104,10 @@ bot.on('text', (ctx) => {
   }
 })
 
-logger.info('getting initial data from api server...')
-Promise.all([
-  axios.get(`http://map.ettu.ru/api/v2/tram/routes/?apiKey=${ettuApiKey}`),
-  axios.get(`http://map.ettu.ru/api/v2/tram/points/?apiKey=${ettuApiKey}`)
-])
-  .then((results) => {
-    results.forEach((result) => {
-      const err = result.data.error
-      if (err.code != 0) {
-        throw new Error(`Error ${err.code}: ${err.msg}`)
-      }
-    })
-    routes = results[0].data.routes
-    points = results[1].data.points
-    logger.info('initial data received')
-
-    allowedTramRoutes.push(...routes.map((route) => route.num).sort((a, b) => a - b))
-
-    logger.info(`allowed tram routes: ${allowedTramRoutes.join(',')}`)
-
-    // Start webhook via launch method (preferred)
-    bot.launch({
-      // webhook: {
-      //   domain: 'https://example.com',
-      //   port: process.env.PORT
-      // }
-    })
-    logger.info('bot ready to communicate!')
-  })
-  .catch(function (error) {
-    // handle error
-    logger.error(error);
-  })
-  .then(function () {
-    // always executed
+ettuService.init()
+  .then(() => {
+    const telegramService = new TelegramService(process.env.BOT_TOKEN, ettuService, mapService, logger)
+    telegramService.startBot()
   })
 
 // Enable graceful stop
