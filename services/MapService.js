@@ -67,7 +67,7 @@ class MapService {
 
     return axios.getUri({
       method: 'post',
-      url: 'https://open.mapquestapi.com/staticmap/v5/map',
+      url: 'https://mapquestapi.com/staticmap/v5/map',
       params: params,
     })
   }
