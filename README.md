@@ -1,4 +1,4 @@
-This bot shows trams locations in Ekaterinburg city using oficial data got from http://ettu.ru
+This bot shows trams locations in Ekaterinburg city using official data got from http://ettu.ru
 
 ## Demo
 See boot in action: [@EkbTramBot](https://t.me/EkbTramBot)
