@@ -146,7 +146,7 @@ class TelegramService {
     this.bot.command('start', this.onStartCommand)
     this.bot.command('help', this.onHelpCommand)
 
-    this.bot.on('text', this.onText)
+    this.bot.on('message', this.onText)
     this.bot.on('inline_query', this.onInlineQuery)
 
     this.bot.launch({
