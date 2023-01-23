@@ -25,7 +25,7 @@ ETTU_API_KEY="111"
 This is your telegram bot token
 
 #### MAPQUEST_KEY
-To show map tiles and markers bot uses `Open Static Map API`: https://developer.mapquest.com/documentation/open/static-map-api/v5/map/
+To show map tiles and markers bot uses `Static Map API`: https://developer.mapquest.com/documentation/static-map-api/v5/
 Please get the key here: https://developer.mapquest.com/user/me/apps
 
 #### ETTU_API_KEY
