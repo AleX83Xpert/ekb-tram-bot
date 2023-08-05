@@ -85,7 +85,7 @@ class TelegramService {
             // always executed
           });
       } else {
-        reject(new Error(`Route ${askedRouteStr} not found`))
+        reject(new Error(`Route ${askedRouteStr} not found. Allowed routes: ${this.allowedTramRoutes.join(', ')}`))
       }
     })
   }
@@ -100,9 +100,17 @@ class TelegramService {
       .then(({ imageUrl, imageThumbUrl }) => {
         this.logger.info(`Send image with tram ${askedRouteStr} to chat`, ctx.chat)
         ctx.telegram.sendPhoto(ctx.chat.id, imageUrl)
+          .then((res) => {
+            this.logger.info('Image was sent to chat', ctx.chat)
+          })
+          .catch((err) => {
+            this.logger.error(`Can't send image: ${err.message}`, ctx.chat)
+            ctx.telegram.sendMessage(ctx.chat.id, 'Oops! An error occured. Can\'t send photo :(')
+          })
       })
       .catch((err) => {
         this.logger.error(err)
+        ctx.telegram.sendMessage(ctx.chat.id, `Oops! An error occured :( ${err.message}`)
       })
   }
 
