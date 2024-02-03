@@ -1,5 +1,6 @@
-const { Telegraf, Context } = require('telegraf');
+const { Telegraf, Context, Input } = require('telegraf');
 const UUID = require('uuid')
+const https = require('https')
 
 class TelegramService {
 
@@ -13,7 +14,7 @@ class TelegramService {
     /**
      * @private
      */
-    this.bot = new Telegraf(botToken);
+    this.bot = new Telegraf(botToken)
 
     /**
      * @private
@@ -73,8 +74,18 @@ class TelegramService {
 
             const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
 
-            const imageUrl = this.mapService.generateMapUrl(vehiclesLocations, askedRouteStr, askedRoutes, this.ettuService.getPoints())
-            const imageThumbUrl = this.mapService.generateMapUrl(vehiclesLocations, askedRouteStr, askedRoutes, this.ettuService.getPoints(), '256,256')
+            /** @type TGenerateMapUrlOptions */
+            const options = {
+              vehiclesLocations,
+              askedRouteStr,
+              askedRoutes,
+              points: this.ettuService.getPoints(),
+              imageWidth: 1024,
+              imageHeight: 1024,
+            }
+
+            const imageUrl = this.mapService.generateMapUrl(options)
+            const imageThumbUrl = this.mapService.generateMapUrl({ ...options, imageWidth: 256, imageHeight: 256 })
 
             resolve({ imageUrl, imageThumbUrl })
           })
@@ -95,23 +106,45 @@ class TelegramService {
    * @param {Context} ctx 
    */
   onText = (ctx) => {
+    const reqId = UUID.v4()
     const askedRouteStr = ctx.message.text
-    this.generateMapUrl(askedRouteStr)
-      .then(({ imageUrl, imageThumbUrl }) => {
-        this.logger.info(`Send image with tram ${askedRouteStr} to chat`, ctx.chat)
-        ctx.telegram.sendPhoto(ctx.chat.id, imageUrl)
-          .then((res) => {
-            this.logger.info('Image was sent to chat', ctx.chat)
-          })
-          .catch((err) => {
-            this.logger.error(`Can't send image: ${err.message}`, ctx.chat)
-            ctx.telegram.sendMessage(ctx.chat.id, 'Oops! An error occured. Can\'t send photo :(')
-          })
+    const message_id = ctx.message.message_id
+
+    this.generateMapUrl(askedRouteStr).then(({ imageUrl, imageThumbUrl }) => {
+      this.logger.info(`${reqId}: Send image with tram ${askedRouteStr} to chat`, ctx.chat)
+
+      // Send with stream to keep map service key in secret
+      https.get(imageUrl, { timeout: 20 }, (imageStream) => {
+        this.logger.debug(`${reqId}: Image stream created`)
+
+        const now = new Date() // month is 0-indexed
+        const [month, day, year] = [now.getMonth(), now.getDate(), now.getFullYear()]
+        const [hour, minutes, seconds] = [now.getHours(), now.getMinutes(), now.getSeconds()]
+        const fileName = `tram-${askedRouteStr}_${year}-${month + 1}-${day}_${hour}-${minutes}-${seconds}.jpg`
+
+        ctx.telegram.sendPhoto(
+          ctx.chat.id,
+          Input.fromReadableStream(imageStream, fileName),
+          { caption: `Tram ${askedRouteStr} route`, reply_parameters: { message_id }, cache_time: 30 },
+        ).then((res) => {
+          this.logger.info(`${reqId}: Image was sent to chat`, ctx.chat)
+        }).catch((err) => {
+          this.logger.error(`${reqId}: Can't send image: ${err.message}`, ctx.chat)
+          ctx.telegram.sendMessage(
+            ctx.chat.id,
+            'Oops! An error occured. Can\'t send image :( You may try to find route here: http://map.ettu.ru/',
+            { reply_parameters: { message_id } },
+          )
+        })
       })
-      .catch((err) => {
-        this.logger.error(err)
-        ctx.telegram.sendMessage(ctx.chat.id, `Oops! An error occured :( ${err.message}`)
-      })
+    }).catch((err) => {
+      this.logger.error(err)
+      ctx.telegram.sendMessage(
+        ctx.chat.id,
+        `Oops! An error occured :( ${err.message} You may try to find route here: http://map.ettu.ru/`,
+        { reply_parameters: { message_id } },
+      )
+    })
   }
 
   /**
@@ -119,34 +152,35 @@ class TelegramService {
    * @param {Context} ctx 
    */
   onInlineQuery = (ctx) => {
+    const reqId = UUID.v4()
     const askedRouteStr = ctx.inlineQuery.query
     if (askedRouteStr) {
-      this.logger.info(`Inline query: ${askedRouteStr}`)
-      this.generateMapUrl(askedRouteStr)
-        .then(({ imageUrl, imageThumbUrl }) => {
-          this.logger.info(`Send inline answer with tram ${askedRouteStr} to:`, ctx.inlineQuery.from)
-          ctx.telegram.answerInlineQuery(
-            ctx.inlineQuery.id,
-            [
-              {
-                type: 'photo',
-                id: UUID.v4(),
-                photo_url: imageUrl,
-                thumb_url: imageThumbUrl,
-                title: `Tram ${askedRouteStr}`,
-                caption: `Tram ${askedRouteStr}`,
-                description: `Tram ${askedRouteStr}`,
-              },
-            ]
-          )
+      this.logger.info(`${reqId}: Inline query: ${askedRouteStr}`)
+      this.generateMapUrl(askedRouteStr).then(({ imageUrl, imageThumbUrl }) => {
+        this.logger.info(`${reqId}: Send inline answer with tram ${askedRouteStr} to:`, ctx.inlineQuery)
+        ctx.telegram.answerInlineQuery(
+          ctx.inlineQuery.id,
+          [
+            {
+              type: 'photo',
+              id: UUID.v4(),
+              photo_url: imageUrl,
+              thumbnail_url: imageThumbUrl,
+              title: `Tram ${askedRouteStr}`,
+              caption: `Tram ${askedRouteStr}`,
+              description: `Tram ${askedRouteStr}`,
+            },
+          ],
+          { cache_time: 30 },
+        ).then((res) => {
+          this.logger.info(`${reqId}: Inline image was sent`, ctx.inlineQuery)
+        }).catch((err) => {
+          this.logger.error(`${reqId}: Can't send inline image: ${err.message}`, ctx.inlineQuery)
         })
-        .catch((err) => {
-          this.logger.warn(`No inline results for '${askedRouteStr}'`)
-          ctx.telegram.answerInlineQuery(ctx.inlineQuery.id, [])
-        })
-    } else {
-      this.logger.warn(`No inline results for '${askedRouteStr}'`)
-      ctx.telegram.answerInlineQuery(ctx.inlineQuery.id, [])
+      }).catch((err) => {
+        this.logger.warn(`${reqId}: No inline results for '${askedRouteStr}'`)
+        ctx.telegram.answerInlineQuery(ctx.inlineQuery.id, [])
+      })
     }
   }
 

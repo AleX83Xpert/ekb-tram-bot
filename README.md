@@ -17,16 +17,37 @@ See boot in action: [@EkbTramBot](https://t.me/EkbTramBot)
 You must set tokens&keys using `.env` file:
 ```
 BOT_TOKEN="..."
-MAPQUEST_KEY="..."
+
+# Use next two values if you use MapQuest service
+# MAP_SERVICE="MAPQUEST"
+# MAP_SERVICE_CONFIG={"key": "<key>"}
+
+#
+# OR
+#
+
+# Use next two values if you use MapBox service
+# MAP_SERVICE="MAPBOX"
+# MAP_SERVICE_CONFIG={"accessToken": "<token>"}
+
 ETTU_API_KEY="111"
 ```
 
 #### BOT_TOKEN
 This is your telegram bot token
 
-#### MAPQUEST_KEY
-To show map tiles and markers bot uses `Static Map API`: https://developer.mapquest.com/documentation/static-map-api/v5/
+#### MAP_SERVICE
+There are two possible values: `MAPQUEST` and `MAPBOX`
+
+##### `MAPQUEST`
+To show map tiles and markers bot uses static Map API: https://developer.mapquest.com/documentation/static-map-api/v5/
+
 Please get the key here: https://developer.mapquest.com/user/me/apps
+
+##### `MAPBOX`
+Uses the MapBox service: https://docs.maptiler.com/cloud/api/static-maps/
+
+You may gey token here: https://cloud.maptiler.com/account/keys/
 
 #### ETTU_API_KEY
 I don't know, just copy this value from http://map.ettu.ru

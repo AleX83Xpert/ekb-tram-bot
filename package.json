@@ -13,6 +13,7 @@
   },
   "keywords": [
     "telegram",
+    "bot",
     "tram",
     "ekaterinburg"
   ],
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/AleX83Xpert/ekb-tram-bot#readme",
   "dependencies": {
+    "@mapbox/mapbox-sdk": "^0.15.3",
     "axios": "^1.2.2",
     "dotenv": "^16.0.3",
     "geolocation-utils": "^1.2.5",

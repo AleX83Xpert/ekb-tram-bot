@@ -2,7 +2,7 @@ version: "3.1"
 services:
   EkbTramBotApp:
     container_name: EkbTramBotApp
-    image: library/node:14.15.4-alpine
+    image: library/node:lts-alpine3.18
     user: "node"
     working_dir: /opt/project
     volumes:

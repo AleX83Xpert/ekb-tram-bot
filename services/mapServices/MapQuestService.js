@@ -1,25 +1,40 @@
-const axios = require('axios');
+const axios = require('axios')
 const geoUtils = require('geolocation-utils')
+const AbstractMapService = require('./AbstractMapService')
 
-class MapService {
+/**
+ * @typedef {object} TMapQuestServiceConfig
+ * @property {string} key
+ */
+
+class MapQuestService extends AbstractMapService {
   /**
-   * @param {string} mapQuestKey 
+   * @param {TMapQuestServiceConfig} config
    */
-  constructor(mapQuestKey) {
-    this.mapQuestKey = mapQuestKey
+  constructor(config) {
+    super()
+    this.key = config.key
   }
 
   /**
-   * @param {{lat:Number, lon: Number, course: Number}} vehiclesLocations 
-   * @param {string} askedRouteStr
-   * @param {EttuRoute[]} askedRoutes
-   * @param {EttuPoint[]} points
-   * 
+   * @typedef {Object} TGenerateMapUrlOptions
+   * @property {{lat:Number, lon: Number, course: Number}} vehiclesLocations 
+   * @property {string} askedRouteStr
+   * @property {EttuRoute[]} askedRoutes
+   * @property {EttuPoint[]} points
+   * @property {number} imageWidth
+   * @property {number} imageHeight
+   */
+
+  /**
+   * @param {TGenerateMapUrlOptions} options
    * @returns {string}
    */
-  generateMapUrl(vehiclesLocations, askedRouteStr, askedRoutes, points, size = '1024,1024') {
+  generateMapUrl(options) {
+    const { vehiclesLocations, askedRouteStr, askedRoutes, points, imageWidth = '1024', imageHeight = '1024' } = options
+
     var params = new URLSearchParams();
-    params.append('key', this.mapQuestKey)
+    params.append('key', this.key)
     params.append(
       'locations',
       vehiclesLocations.map(
@@ -30,7 +45,7 @@ class MapService {
         }
       ).join('||')
     )
-    params.append('size', size)
+    params.append('size', `${imageWidth},${imageHeight}`)
     params.append('format', 'jpg90')
     params.append('defaultMarker', `circle-${askedRouteStr}`)
 
@@ -73,4 +88,4 @@ class MapService {
   }
 }
 
-module.exports = MapService
+module.exports = MapQuestService
