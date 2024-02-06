@@ -25,11 +25,11 @@
   "homepage": "https://github.com/AleX83Xpert/ekb-tram-bot#readme",
   "dependencies": {
     "@mapbox/mapbox-sdk": "^0.15.3",
-    "axios": "^1.2.2",
-    "dotenv": "^16.0.3",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1",
     "geolocation-utils": "^1.2.5",
     "pino": "^8.18.0",
-    "telegraf": "^4.11.2"
+    "telegraf": "^4.15.3"
   },
   "devDependencies": {
     "uuid": "^9.0.0"
