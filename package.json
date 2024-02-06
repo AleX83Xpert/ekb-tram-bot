@@ -2,9 +2,11 @@
   "name": "ekb-tram-bot",
   "version": "1.0.2",
   "description": "Telegram bot for getting info about trams in Ekaterinburg",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
-    "start": "node index.js",
+    "build": "tsc -p .",
+    "dev": "export NODE_ENV=development TS_NODE_BASEURL=./dist && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"tsc -w\" \"nodemon\"",
+    "start": "node build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -32,6 +34,14 @@
     "telegraf": "^4.15.3"
   },
   "devDependencies": {
+    "@types/mapbox__mapbox-sdk": "^0.14.0",
+    "@types/node": "^20.11.16",
+    "@types/uuid": "^9.0.8",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.3",
     "uuid": "^9.0.0"
   },
   "engines": {

@@ -55,6 +55,7 @@ I don't know, just copy this value from http://map.ettu.ru
 ## Starting
 ```
 npm i
+npm build
 npm start
 ```
 
