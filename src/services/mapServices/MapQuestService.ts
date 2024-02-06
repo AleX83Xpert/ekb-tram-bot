@@ -1,36 +1,20 @@
-const axios = require('axios')
-const geoUtils = require('geolocation-utils')
-const AbstractMapService = require('./AbstractMapService')
+import axios from 'axios'
+import { moveTo, getBoundingBox, LatLon, BoundingBox } from 'geolocation-utils'
+import { AbstractMapService, TGenerateMapUrlOptions } from './AbstractMapService'
 
-/**
- * @typedef {object} TMapQuestServiceConfig
- * @property {string} key
- */
+interface TMapQuestServiceConfig {
+  key: string
+}
 
 class MapQuestService extends AbstractMapService {
-  /**
-   * @param {TMapQuestServiceConfig} config
-   */
-  constructor(config) {
+  key: string
+
+  constructor(config: TMapQuestServiceConfig) {
     super()
     this.key = config.key
   }
 
-  /**
-   * @typedef {Object} TGenerateMapUrlOptions
-   * @property {{lat:Number, lon: Number, course: Number}} vehiclesLocations 
-   * @property {string} askedRouteStr
-   * @property {EttuRoute[]} askedRoutes
-   * @property {EttuPoint[]} points
-   * @property {number} imageWidth
-   * @property {number} imageHeight
-   */
-
-  /**
-   * @param {TGenerateMapUrlOptions} options
-   * @returns {string}
-   */
-  generateMapUrl(options) {
+  generateMapUrl(options: TGenerateMapUrlOptions): string {
     const { vehiclesLocations, askedRouteStr, askedRoutes, points, imageWidth = '1024', imageHeight = '1024' } = options
 
     var params = new URLSearchParams();
@@ -39,7 +23,7 @@ class MapQuestService extends AbstractMapService {
       'locations',
       vehiclesLocations.map(
         ({ lon, lat, course }) => {
-          const coursePointLocation = geoUtils.moveTo({ lat, lon }, { distance: 150, heading: course + 90 })
+          const coursePointLocation = moveTo({ lat, lon }, { distance: 150, heading: course + 90 })
 
           return `${lat},${lon}||${coursePointLocation.lat},${coursePointLocation.lon}|via-sm`
         }
@@ -50,26 +34,26 @@ class MapQuestService extends AbstractMapService {
     params.append('defaultMarker', `circle-${askedRouteStr}`)
 
     // add routes polylines
-    const routesPoints = []
+    const routesPoints: { latitude: number, longitude: number }[] = []
     askedRoutes.forEach((askedRoute) => {
       askedRoute.elements.forEach((element, elementKey) => {
-        const polyLine = []
+        const polyLine: string[] = []
         element.full_path.forEach((pointId) => {
           const filteredPoints = points.filter((x) => x.ID === String(pointId))
           if (filteredPoints.length > 0) {
             const point = filteredPoints[0]
             polyLine.push(`${point.LAT},${point.LON}`)
-            routesPoints.push({ lat: Number(point.LAT), lon: Number(point.LON) })
+            routesPoints.push({ latitude: Number(point.LAT), longitude: Number(point.LON) })
           }
         })
         params.append('shape', polyLine.join('|'))
       })
     })
 
-    const box = geoUtils.getBoundingBox(routesPoints)
+    const box = getBoundingBox(routesPoints, 0)
 
-    const lons = [box.topLeft.lon, box.bottomRight.lon]
-    const lats = [box.topLeft.lat, box.bottomRight.lat]
+    const lons = [box.topLeft.longitude, box.bottomRight.longitude]
+    const lats = [box.topLeft.latitude, box.bottomRight.latitude]
 
     const boxData = [
       Math.max(...lats),
@@ -88,4 +72,4 @@ class MapQuestService extends AbstractMapService {
   }
 }
 
-module.exports = MapQuestService
+export { MapQuestService }
