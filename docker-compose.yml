@@ -7,4 +7,4 @@ services:
     working_dir: /opt/project
     volumes:
       - ./:/opt/project
-    command: sh -c "npm install && npm run build && npm start"
+    command: sh -c "npm ci && npm run build && npm start"
