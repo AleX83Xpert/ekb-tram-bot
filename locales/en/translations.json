@@ -1,0 +1,7 @@
+{
+  "whatCanIDo": "This bot shows following tram routes in Ekaterinburg: {{routesList}}",
+  "helpMessage": "To watch trams send the number of the tram from the following list: {{routesList}}",
+  "tramRoute": "Tram {{routeNumber}} route",
+  "cantSendImageException": "Oops! An error occured. Can't send image :( You may try to find route here: http://map.ettu.ru/",
+  "cantCreateImageUrlException": "Oops! An error occured :( {{errMessage}} You may try to find route here: http://map.ettu.ru/"
+}
