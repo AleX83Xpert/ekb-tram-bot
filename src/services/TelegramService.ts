@@ -1,9 +1,8 @@
-import { Telegraf, Context, Input, NarrowedContext, Middleware } from 'telegraf'
-import { v4 } from 'uuid'
+import { Telegraf, Context, Input } from 'telegraf'
 import https from 'https'
 import { EttuService } from './EttuService'
 import { MapServiceType } from './mapServices'
-import { Update, Message } from 'telegraf/typings/core/types/typegram'
+import { Update } from 'telegraf/typings/core/types/typegram'
 import { message } from 'telegraf/filters'
 import { i18n } from '../i18n'
 import { TFunction } from 'i18next/typescript/t'
@@ -68,9 +67,19 @@ class TelegramService {
 
   startBot () {
     this.bot.use((ctx, next) => {
+      const start = Date.now()
+      if (!ctx.reqId) {
+        ctx.reqId = crypto.randomUUID()
+      }
+
+      this.logger.info({ msg: 'requestStart', reqId: ctx.reqId, updateType: ctx.updateType, data: ctx.update })
+
       ctx.t = i18n(ctx.from?.language_code)
-      ctx.reqId = v4()
-      next()
+
+      return next().then(() => {
+        const duration = Date.now() - start
+        this.logger.info({ msg: 'requestEnd', reqId: ctx.reqId, duration })
+      })
     })
 
     this.bot.command('start', (ctx) => {
@@ -125,18 +134,17 @@ class TelegramService {
     })
 
     this.bot.on('inline_query', (ctx) => {
-      const reqId = v4()
       const askedRouteStr = ctx.inlineQuery.query
       if (askedRouteStr) {
-        this.logger.info({ reqId, askedRouteStr }, 'inline query')
+        this.logger.info({ reqId: ctx.reqId, askedRouteStr }, 'inline query')
         this.generateMapUrl(askedRouteStr).then(({ imageUrl, imageThumbUrl }) => {
-          this.logger.info({ inlineQuery: ctx.inlineQuery, reqId, askedRouteStr }, 'send inline answer')
+          this.logger.info({ inlineQuery: ctx.inlineQuery, reqId: ctx.reqId, askedRouteStr }, 'send inline answer')
           ctx.telegram.answerInlineQuery(
             ctx.inlineQuery.id,
             [
               {
                 type: 'photo',
-                id: v4(),
+                id: crypto.randomUUID(),
                 photo_url: imageUrl,
                 thumbnail_url: imageThumbUrl,
                 title: ctx.t('tramRoute', { routeNumber: askedRouteStr }),
@@ -146,12 +154,12 @@ class TelegramService {
             ],
             { cache_time: 30 },
           ).then((res) => {
-            this.logger.info({ inlineQuery: ctx.inlineQuery, reqId }, 'inline image was sent')
+            this.logger.info({ inlineQuery: ctx.inlineQuery, reqId: ctx.reqId }, 'inline image was sent')
           }).catch((err) => {
-            this.logger.error({ inlineQuery: ctx.inlineQuery, reqId, err }, 'can not send inline image')
+            this.logger.error({ inlineQuery: ctx.inlineQuery, reqId: ctx.reqId, err }, 'can not send inline image')
           })
         }).catch((err) => {
-          this.logger.warn({ reqId, askedRouteStr, err }, 'generateMapUrl error')
+          this.logger.warn({ reqId: ctx.reqId, askedRouteStr, err }, 'generateMapUrl error')
           ctx.telegram.answerInlineQuery(ctx.inlineQuery.id, [])
         })
       }
