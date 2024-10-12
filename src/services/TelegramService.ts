@@ -7,6 +7,7 @@ import { message } from 'telegraf/filters'
 import { i18n } from '../i18n'
 import { TFunction } from 'i18next/typescript/t'
 import { TGenerateMapUrlOptions } from './mapServices/AbstractMapService'
+import crypto from 'node:crypto'
 
 type TContext = Context<Update.MessageUpdate> & { t: TFunction, reqId: string }
 
