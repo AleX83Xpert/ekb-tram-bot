@@ -6,6 +6,7 @@ import { Update } from 'telegraf/typings/core/types/typegram'
 import { message } from 'telegraf/filters'
 import { i18n } from '../i18n'
 import { TFunction } from 'i18next/typescript/t'
+import { TGenerateMapUrlOptions } from './mapServices/AbstractMapService'
 
 type TContext = Context<Update.MessageUpdate> & { t: TFunction, reqId: string }
 
@@ -38,8 +39,7 @@ class TelegramService {
 
             const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
 
-            /** @type TGenerateMapUrlOptions */
-            const options = {
+            const options: TGenerateMapUrlOptions = {
               vehiclesLocations,
               askedRouteStr,
               askedRoutes,

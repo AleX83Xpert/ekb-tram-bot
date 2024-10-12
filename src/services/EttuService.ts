@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 interface EttuVehicle {
   ATIME: string;
   DEV_ID: string;
@@ -107,25 +105,21 @@ class EttuService {
     return this.points
   }
 
-  ettuCall(vehicleType: 'tram' | 'troll', dataType: 'boards' | 'routes' | 'points', dataField: 'vehicles' | 'routes' | 'points', urlParams: object = {}): Promise<any> {
+  ettuCall(vehicleType: 'tram' | 'troll', dataType: 'boards' | 'routes' | 'points', dataField: 'vehicles' | 'routes' | 'points', urlParams: Record<string, string> = {}): Promise<any> {
     return new Promise((resolve, reject) => {
-      const url = axios.getUri({
-        method: 'get',
-        url: `http://map.ettu.ru/api/v2/${vehicleType}/${dataType}/`,
-        params: {
-          ...urlParams,
-          apiKey: this.apiKey,
-        },
-      })
+      const baseUrl = `http://map.ettu.ru/api/v2/${vehicleType}/${dataType}`
+      const urlSearchParams = new URLSearchParams(urlParams)
+      urlSearchParams.append('apiKey', this.apiKey)
 
-      axios.get(url)
-        .then((res: { data: { [x: string]: any; error: any; }; }) => {
-          const err = res.data.error
+      fetch(`${baseUrl}?${urlSearchParams.toString()}`)
+        .then(async (res) => {
+          const data = await res.json()
+          const err = data.error
           if (err.code !== 0) {
             throw new Error(`Error ${err.code}: can not load ${vehicleType}/${dataType}: ${err.msg}`)
           }
 
-          resolve(res.data[dataField])
+          resolve(data[dataField])
         })
         .catch((err: any) => {
           reject(err)
@@ -134,7 +128,7 @@ class EttuService {
   }
 
   getTramBoards(): Promise<EttuVehicle[]> {
-    return this.ettuCall('tram', 'boards', 'vehicles', { order: 1 })
+    return this.ettuCall('tram', 'boards', 'vehicles', { order: '1' })
   }
 
   loadTramRoutes(): Promise<EttuRoute[]> {

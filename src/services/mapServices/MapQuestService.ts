@@ -1,5 +1,4 @@
-import axios from 'axios'
-import { moveTo, getBoundingBox, LatLon, BoundingBox } from 'geolocation-utils'
+import { moveTo, getBoundingBox } from 'geolocation-utils'
 import { AbstractMapService, TGenerateMapUrlOptions } from './AbstractMapService'
 
 interface TMapQuestServiceConfig {
@@ -64,11 +63,7 @@ class MapQuestService extends AbstractMapService {
 
     params.append('boundingBox', boxData.join(','))
 
-    return axios.getUri({
-      method: 'post',
-      url: 'https://mapquestapi.com/staticmap/v5/map',
-      params: params,
-    })
+    return `https://mapquestapi.com/staticmap/v5/map?${params.toString()}`
   }
 }
 
