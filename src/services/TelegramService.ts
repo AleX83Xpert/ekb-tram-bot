@@ -30,39 +30,39 @@ class TelegramService {
     this.allowedTramRoutes = ettuService.getRoutesNums()
   }
 
+  private isRouteAllowed (routeNumber: string) {
+    return this.allowedTramRoutes.includes(routeNumber)
+  }
+
   private generateMapUrl = (askedRouteStr: string): Promise<{ imageUrl: string; imageThumbUrl: string }> => {
     return new Promise((resolve, reject) => {
-      if (this.allowedTramRoutes.includes(askedRouteStr)) {
-        this.ettuService.getTramBoards()
-          .then((response) => {
-            const askedVehicles = response.filter((tram) => (tram.ROUTE === askedRouteStr))
-            const askedRoutes = this.ettuService.getRoutes(askedRouteStr)
+      this.ettuService.getTramBoards()
+        .then((response) => {
+          const askedVehicles = response.filter((tram) => (tram.ROUTE === askedRouteStr))
+          const askedRoutes = this.ettuService.getRoutes(askedRouteStr)
 
-            const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
+          const vehiclesLocations = askedVehicles.map((tram) => ({ lat: Number(tram.LAT), lon: Number(tram.LON), course: Number(tram.COURSE) }))
 
-            const options: TGenerateMapUrlOptions = {
-              vehiclesLocations,
-              askedRouteStr,
-              askedRoutes,
-              points: this.ettuService.getPoints(),
-              imageWidth: 1024,
-              imageHeight: 1024,
-            }
+          const options: TGenerateMapUrlOptions = {
+            vehiclesLocations,
+            askedRouteStr,
+            askedRoutes,
+            points: this.ettuService.getPoints(),
+            imageWidth: 1024,
+            imageHeight: 1024,
+          }
 
-            const imageUrl = this.mapService.generateMapUrl(options)
-            const imageThumbUrl = this.mapService.generateMapUrl({ ...options, imageWidth: 256, imageHeight: 256 })
+          const imageUrl = this.mapService.generateMapUrl(options)
+          const imageThumbUrl = this.mapService.generateMapUrl({ ...options, imageWidth: 256, imageHeight: 256 })
 
-            resolve({ imageUrl, imageThumbUrl })
-          })
-          .catch((err) => {
-            reject(err)
-          })
-          .then(() => {
-            // always executed
-          });
-      } else {
-        reject(new Error(`Route ${askedRouteStr} not found. Allowed routes: ${this.allowedTramRoutes.join(', ')}`))
-      }
+          resolve({ imageUrl, imageThumbUrl })
+        })
+        .catch((err) => {
+          reject(err)
+        })
+        .then(() => {
+          // always executed
+        })
     })
   }
 
@@ -99,6 +99,14 @@ class TelegramService {
 
       this.generateMapUrl(askedRouteStr).then(({ imageUrl, imageThumbUrl }) => {
         this.logger.info({ chat: ctx.chat, reqId: ctx.reqId, askedRouteStr }, 'send image to chat')
+
+        if (!this.isRouteAllowed(askedRouteStr)) {
+          return ctx.telegram.sendMessage(
+            ctx.chat.id,
+            ctx.t('unknownTramRoute', { routeNumber: askedRouteStr, routesList: this.allowedTramRoutes.join(', ') }),
+            { reply_to_message_id: message_id },
+          )
+        }
 
         // Send with stream to keep map service key in secret
         https.get(imageUrl, { timeout: 20 }, (imageStream) => {
@@ -138,6 +146,11 @@ class TelegramService {
       const askedRouteStr = ctx.inlineQuery.query
       if (askedRouteStr) {
         this.logger.info({ reqId: ctx.reqId, askedRouteStr }, 'inline query')
+
+        if (!this.isRouteAllowed(askedRouteStr)) {
+          return
+        }
+
         this.generateMapUrl(askedRouteStr).then(({ imageUrl, imageThumbUrl }) => {
           this.logger.info({ inlineQuery: ctx.inlineQuery, reqId: ctx.reqId, askedRouteStr }, 'send inline answer')
           ctx.telegram.answerInlineQuery(
