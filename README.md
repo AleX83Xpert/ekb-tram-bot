@@ -53,14 +53,35 @@ You may gey token here: https://cloud.maptiler.com/account/keys/
 I don't know, just copy this value from http://map.ettu.ru
 
 ## Starting
+
+### Locally
 ```
 npm i
 npm build
 npm start
 ```
 
-or
+### On prod environment (just an option)
 
+1. Copy `docker-compose.yml` in some directory on your server
+
+2. Create `.env` file in the same directory (see `.env.example`)
+
+3. Build the app
+```bash
+docker build . -t ekb-tram-bot-app:latest
 ```
-docker-compose up -d
+
+4. Upload image to the server
+```bash
+docker save ekb-tram-bot-app:latest | ssh user@server "docker load"
+```
+
+5. Login to server via ssh
+
+6. Go to directory with .env and docker-compose.yml
+
+7. Up the container
+```bash
+docker compose up -d ekb-tram-bot-app
 ```

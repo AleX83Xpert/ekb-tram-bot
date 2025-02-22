@@ -1,9 +1,7 @@
 services:
-  EkbTramBotApp:
-    container_name: EkbTramBotApp
-    image: library/node:18-alpine
-    user: "node"
-    working_dir: /opt/project
-    volumes:
-      - ./:/opt/project
-    command: sh -c "npm ci --omit=dev && npm run build && npm start"
+  ekb-tram-bot-app:
+    container_name: ekb-tram-bot-app
+    image: ekb-tram-bot-app:latest
+    restart: always
+    env_file:
+      - .env
